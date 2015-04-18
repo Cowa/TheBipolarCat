@@ -9,7 +9,7 @@ type GameState = NewDay | Playing | EndDay | End | Pause
 type Mood = Happy | Excited | Tender | Scared | Angry | Sad
 type Emotion = Good | Bad
 
-type alias Input = { dir: { x:Int, y: Int }, delta: Time }
+type alias Input = { dir: { x:Int, y: Int }, enter: Bool, escape: Bool, delta: Time }
 
 type alias Cat = {
   x: Float, y: Float,
