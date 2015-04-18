@@ -7,3 +7,7 @@ You are an angel and a devil. You are the **Bipolar Cat**.
 Depending on how you interact with people the world will be directly affected.
 
 Good luck.
+
+<p align="center">
+  <img src="assets/cat/catStanding.gif" alt="bipolar cat"/>
+</p>
