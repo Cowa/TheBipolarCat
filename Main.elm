@@ -1,43 +1,19 @@
 import Text (asText)
 import List
 import Time (Time, every, second, fps, inSeconds)
-import Signal (..)
+import Signal (Signal, foldp, (<~), (~))
+import Signal
+import Color (..)
+import Graphics.Collage (..)
+import Graphics.Element (..)
+import Touch
+import Window
+
+import Models (..)
 
 --
--- Models
+-- Implemented models
 --
-type GameWrapperState = Menu | Credits | Play
-type GameState = NewDay | Playing | EndDay | End | Pause
-
-type Mood = Happy | Excited | Tender | Scared | Angry | Sad
-type Emotion = Good | Bad
-
-type alias Input = { delta: Time }
-
-type alias Cat = {
-  x: Int, y: Int,
-  w: Int, h: Int
-}
-
-type alias People = {
-  x: Int, y: Int,
-  w: Int, h: Int,
-  mood: Mood,
-  emotionBar: List Emotion
-}
-
-type alias GameWrapper = {
-  state: GameWrapperState,
-  game: Game
-}
-
-type alias Game = {
-  cat: Cat,
-  people: List People,
-  state: GameState,
-  time: Float
-}
-
 input: Signal Input
 input = (Input <~ fps 60)
 
@@ -59,21 +35,48 @@ game = {
 
 gameWrapper: GameWrapper
 gameWrapper = {
-  state = Menu,
+  state = Play,
   game = game }
 
 --
 -- Update
 --
+stepGameWrapper: Input -> GameWrapper -> GameWrapper
+stepGameWrapper input ({ state, game } as gameWrapper) = case state of
+  Menu -> gameWrapper
+  Credits -> gameWrapper
+  Play -> { gameWrapper |
+    game <- stepGame input game }
+
+
+
 stepGame: Input -> Game -> Game
 stepGame { delta } game = { game |
   time <- game.time + (inSeconds delta),
   state <- Playing }
 
-gameState : Signal Game
-gameState = foldp stepGame game input
+
+
+gameWrapperState: Signal GameWrapper
+gameWrapperState = foldp stepGameWrapper gameWrapper input
 
 --
 -- View
 --
-main = (toString >> asText) <~ gameState
+box color = filled color (square 40)
+
+drawCat: Cat -> Color -> Form
+drawCat cat color = filled color (rect (toFloat cat.w) (toFloat cat.h))
+
+display (w, h) {state, game} = case state of
+  Menu -> image 150 250 "assets/menu.png"
+  Credits -> image 150 250 "assets/menu.png"
+  Play -> collage w h
+    [ drawCat game.cat red
+    , move (100, game.time * 10) (drawCat game.cat blue)
+    ]
+
+--
+-- Boostrap!
+--
+main = display <~ Window.dimensions ~ gameWrapperState
