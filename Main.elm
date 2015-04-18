@@ -1,5 +1,4 @@
 import Text (asText)
-import List
 import Time (Time, every, second, fps, inSeconds)
 import Signal (Signal, foldp, (<~), (~))
 import Signal
@@ -8,17 +7,25 @@ import Graphics.Collage (..)
 import Graphics.Element (..)
 import Touch
 import Window
+import Keyboard
 
+-- Custom modules
 import Models (..)
 
 --
 -- Implemented models
 --
+delta: Signal Time
+delta = fps 60
+
+dir: Signal { x: Int, y: Int }
+dir = (\a -> a) <~ Keyboard.arrows
+
 input: Signal Input
-input = (Input <~ fps 60)
+input = (Input <~ dir ~ delta)
 
 cat: Cat
-cat = { x = 0, y = 0, w = 75, h = 75 }
+cat = { x = 0, y = 0, w = 400, h = 400, vx = 0, vy = 0 }
 
 people: People
 people = { x = 0, y = 0, w = 10, h = 10, mood = Tender, emotionBar = [Good, Good, Bad] }
@@ -41,46 +48,55 @@ screen = {
 stepScreen: Input -> Screen -> Screen
 stepScreen input ({ state, game } as screen) = case state of
   Menu -> stepMenu input screen
-  Credits -> stepCredits input screen
   Play -> { screen |
     game <- stepGame input game }
 
 stepMenu: Input -> Screen -> Screen
 stepMenu input screen = screen
 
-stepCredits: Input -> Screen -> Screen
-stepCredits input screen = screen
+-- Handle cat's velocity left & right (vx)
+walkCat: Input -> Cat -> Cat
+walkCat { dir } cat = { cat |
+  vx <-
+    if | dir.x < 0 -> -0.5
+       | dir.x > 0 ->  0.5
+       | True      ->  0 }
+
+-- Handle cat's physics (x, y)
+physicsCat: Input -> Cat -> Cat
+physicsCat { delta } cat = { cat |
+  x <- cat.x + delta * cat.vx,
+  y <- max 0 (cat.y + delta * cat.vy) }
 
 stepGame: Input -> Game -> Game
-stepGame { delta } game = { game |
-  time <- game.time + (inSeconds delta),
-  state <- Playing }
+stepGame ({ dir, delta } as input) game =
+  let
+    cat' = game.cat |> walkCat input |> physicsCat input
+  in
+  { game |
+    time <- game.time + (inSeconds delta),
+    cat <- cat' }
 
 --
 -- View
 --
 drawCat: Cat -> Color -> Form
-drawCat cat color = filled color (rect (toFloat cat.w) (toFloat cat.h))
+drawCat cat color = toForm (image cat.w cat.h "assets/cat.gif")
 
 displayMenu (w, h) =
   collage w h [
     toForm (image 150 250 "assets/menu.png")
   ]
 
-displayCredits (w, h) =
-  collage w h [
-    toForm (image 150 250 "assets/menu.png")
-  ]
-
 displayGame (w, h) ({cat, people, state, time} as game) =
-  collage w h [
-    drawCat cat red,
-    move (100, time * 10) (drawCat cat blue)
-  ]
+  container w h middle
+    (collage 1024 800 [
+      filled green (rect (toFloat 1024) (toFloat 800)),
+      move (cat.x, cat.y) (drawCat cat red)
+    ])
 
 display (w, h) ({state, game} as screen) = case state of
   Menu -> displayMenu (w, h)
-  Credits -> displayCredits (w, h)
   Play -> displayGame (w, h) game
 
 --
