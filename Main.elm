@@ -18,13 +18,10 @@ input: Signal Input
 input = (Input <~ fps 60)
 
 cat: Cat
-cat = {
-  x = 0, y = 0, w = 10, h = 10 }
+cat = { x = 0, y = 0, w = 75, h = 75 }
 
 people: People
-people = {
-  x = 0, y = 0, w = 10, h = 10,
-  mood = Tender, emotionBar = [Good, Good, Bad] }
+people = { x = 0, y = 0, w = 10, h = 10, mood = Tender, emotionBar = [Good, Good, Bad] }
 
 game: Game
 game = {
@@ -33,50 +30,60 @@ game = {
   state = NewDay,
   time = 0.0 }
 
-gameWrapper: GameWrapper
-gameWrapper = {
+screen: Screen
+screen = {
   state = Play,
   game = game }
 
 --
 -- Update
 --
-stepGameWrapper: Input -> GameWrapper -> GameWrapper
-stepGameWrapper input ({ state, game } as gameWrapper) = case state of
-  Menu -> gameWrapper
-  Credits -> gameWrapper
-  Play -> { gameWrapper |
+stepScreen: Input -> Screen -> Screen
+stepScreen input ({ state, game } as screen) = case state of
+  Menu -> stepMenu input screen
+  Credits -> stepCredits input screen
+  Play -> { screen |
     game <- stepGame input game }
 
+stepMenu: Input -> Screen -> Screen
+stepMenu input screen = screen
 
+stepCredits: Input -> Screen -> Screen
+stepCredits input screen = screen
 
 stepGame: Input -> Game -> Game
 stepGame { delta } game = { game |
   time <- game.time + (inSeconds delta),
   state <- Playing }
 
-
-
-gameWrapperState: Signal GameWrapper
-gameWrapperState = foldp stepGameWrapper gameWrapper input
-
 --
 -- View
 --
-box color = filled color (square 40)
-
 drawCat: Cat -> Color -> Form
 drawCat cat color = filled color (rect (toFloat cat.w) (toFloat cat.h))
 
-display (w, h) {state, game} = case state of
-  Menu -> image 150 250 "assets/menu.png"
-  Credits -> image 150 250 "assets/menu.png"
-  Play -> collage w h
-    [ drawCat game.cat red
-    , move (100, game.time * 10) (drawCat game.cat blue)
-    ]
+displayMenu (w, h) =
+  collage w h [
+    toForm (image 150 250 "assets/menu.png")
+  ]
+
+displayCredits (w, h) =
+  collage w h [
+    toForm (image 150 250 "assets/menu.png")
+  ]
+
+displayGame (w, h) ({cat, people, state, time} as game) =
+  collage w h [
+    drawCat cat red,
+    move (100, time * 10) (drawCat cat blue)
+  ]
+
+display (w, h) ({state, game} as screen) = case state of
+  Menu -> displayMenu (w, h)
+  Credits -> displayCredits (w, h)
+  Play -> displayGame (w, h) game
 
 --
 -- Boostrap!
 --
-main = display <~ Window.dimensions ~ gameWrapperState
+main = display <~ (Window.dimensions) ~ (foldp stepScreen screen input)

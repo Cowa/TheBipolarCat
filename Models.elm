@@ -3,7 +3,7 @@ module Models where
 import Time (..)
 import Signal (..)
 
-type GameWrapperState = Menu | Credits | Play
+type ScreenState = Menu | Credits | Play
 type GameState = NewDay | Playing | EndDay | End | Pause
 
 type Mood = Happy | Excited | Tender | Scared | Angry | Sad
@@ -23,8 +23,8 @@ type alias People = {
   emotionBar: List Emotion
 }
 
-type alias GameWrapper = {
-  state: GameWrapperState,
+type alias Screen = {
+  state: ScreenState,
   game: Game
 }
 
