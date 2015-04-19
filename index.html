@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html><head><meta charset="UTF-8"><title>Main</title><style>html,head,body { padding:0; margin:0; }
+<html><head><meta charset="UTF-8"><title>The Bipolar Cat</title><style>html,head,body { padding:0; margin:0; }
 body { font-family: calibri, helvetica, arial, sans-serif; }</style><script type="text/javascript">var Elm = Elm || { Native: {} };Elm.Basics = Elm.Basics || {};
 Elm.Basics.make = function (_elm) {
    "use strict";
@@ -1607,22 +1607,18 @@ Elm.Input.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm),
    $Time = Elm.Time.make(_elm),
    $Touch = Elm.Touch.make(_elm);
+   var clickEndDayButton = $Signal.channel(false);
    var clickNewDayButton = $Signal.channel(false);
+   var endDay = A2($Signal._op["<~"],
+   function (a) {
+      return a;
+   },
+   $Signal.subscribe(clickEndDayButton));
    var nextDay = A2($Signal._op["<~"],
    function (a) {
       return a;
    },
    $Signal.subscribe(clickNewDayButton));
-   var escape = A2($Signal._op["<~"],
-   function (a) {
-      return a;
-   },
-   $Keyboard.isDown(27));
-   var enter = A2($Signal._op["<~"],
-   function (a) {
-      return a;
-   },
-   $Keyboard.enter);
    var touch = A2($Signal._op["<~"],
    function (t) {
       return _U.cmp($List.length(t),
@@ -1636,24 +1632,29 @@ Elm.Input.make = function (_elm) {
       t);
    },
    $Touch.touches);
-   var dir = A2($Signal._op["<~"],
+   var delta = A2($Signal._op["<~"],
    function (a) {
-      return a;
+      return a / 4;
    },
-   $Keyboard.arrows);
-   var delta = $Time.fps(50);
-   var Input = F6(function (a,
+   $Time.fps(30));
+   var Input = F9(function (a,
    b,
    c,
    d,
    e,
-   f) {
+   f,
+   g,
+   h,
+   i) {
       return {_: {}
-             ,delta: f
+             ,ctrl: f
+             ,delta: i
              ,dir: a
+             ,endDay: h
              ,enter: c
              ,escape: d
-             ,nextDay: e
+             ,nextDay: g
+             ,space: e
              ,touch: b};
    });
    var input = A2($Signal._op["~"],
@@ -1661,21 +1662,28 @@ Elm.Input.make = function (_elm) {
    A2($Signal._op["~"],
    A2($Signal._op["~"],
    A2($Signal._op["~"],
-   A2($Signal._op["<~"],Input,dir),
+   A2($Signal._op["~"],
+   A2($Signal._op["~"],
+   A2($Signal._op["~"],
+   A2($Signal._op["<~"],
+   Input,
+   $Keyboard.arrows),
    touch),
-   enter),
-   escape),
+   $Keyboard.enter),
+   $Keyboard.isDown(27)),
+   $Keyboard.space),
+   $Keyboard.ctrl),
    nextDay),
+   endDay),
    delta);
    _elm.Input.values = {_op: _op
                        ,Input: Input
                        ,delta: delta
-                       ,dir: dir
                        ,touch: touch
-                       ,enter: enter
-                       ,escape: escape
                        ,nextDay: nextDay
+                       ,endDay: endDay
                        ,clickNewDayButton: clickNewDayButton
+                       ,clickEndDayButton: clickEndDayButton
                        ,input: input};
    return _elm.Input.values;
 };Elm.Keyboard = Elm.Keyboard || {};
@@ -2071,13 +2079,6 @@ Elm.Models.make = function (_elm) {
    _L = _N.List.make(_elm),
    _P = _N.Ports.make(_elm),
    $moduleName = "Models";
-   var cat = {_: {}
-             ,h: 200
-             ,vx: 0
-             ,vy: 0
-             ,w: 144
-             ,x: -450
-             ,y: -111};
    var Button = F4(function (a,
    b,
    c,
@@ -2103,66 +2104,91 @@ Elm.Models.make = function (_elm) {
              ,game: b
              ,state: a};
    });
-   var People = F6(function (a,
+   var People = F7(function (a,
    b,
    c,
    d,
    e,
-   f) {
+   f,
+   g) {
       return {_: {}
-             ,emotionBar: f
+             ,emotionBar: g
              ,h: d
+             ,kind: f
              ,mood: e
              ,w: c
              ,x: a
              ,y: b};
    });
-   var Cat = F6(function (a,
+   var Cat = F7(function (a,
    b,
    c,
    d,
    e,
-   f) {
+   f,
+   g) {
       return {_: {}
-             ,h: d
-             ,vx: e
-             ,vy: f
-             ,w: c
-             ,x: a
-             ,y: b};
+             ,action: a
+             ,h: e
+             ,vx: f
+             ,vy: g
+             ,w: d
+             ,x: b
+             ,y: c};
    });
+   var Nope = {ctor: "Nope"};
+   var cat = {_: {}
+             ,action: Nope
+             ,h: 200
+             ,vx: 0
+             ,vy: 0
+             ,w: 144
+             ,x: -450
+             ,y: -111};
+   var Purr = {ctor: "Purr"};
+   var Meow = {ctor: "Meow"};
+   var Citizen = {ctor: "Citizen"};
+   var Tie = {ctor: "Tie"};
    var Bad = {ctor: "Bad"};
    var Good = {ctor: "Good"};
    var Sad = {ctor: "Sad"};
    var Angry = {ctor: "Angry"};
    var Scared = {ctor: "Scared"};
    var Tender = {ctor: "Tender"};
-   var people = {_: {}
-                ,emotionBar: _L.fromArray([Good
-                                          ,Good
-                                          ,Bad])
-                ,h: 10
-                ,mood: Tender
-                ,w: 10
-                ,x: 0
-                ,y: 0};
+   var tie = {_: {}
+             ,emotionBar: _L.fromArray([])
+             ,h: 155
+             ,kind: Tie
+             ,mood: Tender
+             ,w: 117
+             ,x: 270
+             ,y: -20};
+   var citizen = {_: {}
+                 ,emotionBar: _L.fromArray([])
+                 ,h: 155
+                 ,kind: Citizen
+                 ,mood: Tender
+                 ,w: 117
+                 ,x: -170
+                 ,y: -20};
    var Excited = {ctor: "Excited"};
    var Happy = {ctor: "Happy"};
    var Pause = {ctor: "Pause"};
    var End = {ctor: "End"};
    var EndDay = {ctor: "EndDay"};
    var Playing = {ctor: "Playing"};
+   var NewDay = {ctor: "NewDay"};
    var game = {_: {}
               ,cat: cat
-              ,people: _L.fromArray([people])
-              ,state: Playing
+              ,people: _L.fromArray([tie
+                                    ,citizen])
+              ,state: NewDay
               ,time: 0.0};
-   var NewDay = {ctor: "NewDay"};
    var Play = {ctor: "Play"};
+   var Menu = {ctor: "Menu"};
    var screen = {_: {}
                 ,game: game
-                ,state: Play};
-   var Menu = {ctor: "Menu"};
+                ,state: Menu};
    _elm.Models.values = {_op: _op
                         ,Menu: Menu
                         ,Play: Play
@@ -2179,13 +2205,19 @@ Elm.Models.make = function (_elm) {
                         ,Sad: Sad
                         ,Good: Good
                         ,Bad: Bad
+                        ,Tie: Tie
+                        ,Citizen: Citizen
+                        ,Meow: Meow
+                        ,Purr: Purr
+                        ,Nope: Nope
                         ,Cat: Cat
                         ,People: People
                         ,Screen: Screen
                         ,Game: Game
                         ,Button: Button
                         ,cat: cat
-                        ,people: people
+                        ,tie: tie
+                        ,citizen: citizen
                         ,game: game
                         ,screen: screen};
    return _elm.Models.values;
@@ -3292,7 +3324,7 @@ Elm.Native.Graphics.Element.make = function(localRuntime) {
             }
         }
 
-        // stop capturing clicks if 
+        // stop capturing clicks if
         if (removed
             && nextProps.hover.ctor === '_Tuple0'
             && nextProps.click.ctor === '_Tuple0')
@@ -3471,7 +3503,7 @@ Elm.Native.Graphics.Input.make = function(localRuntime) {
         btn.elm_up.style.display = 'block';
         btn.elm_hover.style.display = 'none';
         btn.elm_down.style.display = 'none';
-  
+
         btn.appendChild(btn.elm_up);
         btn.appendChild(btn.elm_hover);
         btn.appendChild(btn.elm_down);
@@ -3801,14 +3833,14 @@ Elm.Native.Keyboard.make = function(elm) {
         // Ignore starting values here
         this.value = emptyState;
         this.kids = [];
-        
+
         var n = args.length;
         var count = 0;
         var isChanged = false;
 
         this.recv = function(timestep, changed, parentID) {
             ++count;
-            if (changed) { 
+            if (changed) {
                 // We know this a change must only be one of the following cases
                 if (parentID === down.id && !A2(NList.member, down.value.keyCode, this.value.keyCodes)) {
                     isChanged = true;
@@ -5277,7 +5309,7 @@ Elm.Native.Text.make = function(elm) {
     function makeSpaces(s) {
         if (s.length == 0) { return s; }
         var arr = s.split('');
-        if (arr[0] == ' ') { arr[0] = "&nbsp;" }      
+        if (arr[0] == ' ') { arr[0] = "&nbsp;" }
         for (var i = arr.length; --i; ) {
             if (arr[i][0] == ' ' && arr[i-1] == ' ') {
                 arr[i-1] = arr[i-1] + arr[i];
@@ -5536,7 +5568,7 @@ Elm.Native.Touch.make = function(localRuntime) {
             this.values = [];
         };
     }
-    
+
     var root = Signal.constant([]),
     tapTime = 500,
     hasTap = false,
@@ -6021,7 +6053,7 @@ Elm.Native.Utils.make = function(localRuntime) {
         return '\n' + lines.join('\n');
     }
 
-    function badCase(moduleName, span) { 
+    function badCase(moduleName, span) {
         var msg = indent([
             'Non-exhaustive pattern match in case-expression.',
             'Make sure your patterns cover every case!'
@@ -6029,7 +6061,7 @@ Elm.Native.Utils.make = function(localRuntime) {
         throw new Error('Runtime error in module ' + moduleName + ' (' + span + ')' + msg);
     }
 
-    function badIf(moduleName, span) { 
+    function badIf(moduleName, span) {
         var msg = indent([
             'Non-exhaustive pattern match in multi-way-if expression.',
             'It is best to use \'otherwise\' as the last branch of multi-way-if.'
@@ -6038,7 +6070,7 @@ Elm.Native.Utils.make = function(localRuntime) {
     }
 
 
-    function badPort(expected, received) { 
+    function badPort(expected, received) {
         var msg = indent([
             'Expecting ' + expected + ' but was given ',
             JSON.stringify(received)
@@ -6492,127 +6524,231 @@ Elm.Step.make = function (_elm) {
    $Basics = Elm.Basics.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Input = Elm.Input.make(_elm),
+   $List = Elm.List.make(_elm),
    $Models = Elm.Models.make(_elm),
-   $Time = Elm.Time.make(_elm);
-   var stepNewDay = F2(function (_v0,
-   _v1) {
+   $Time = Elm.Time.make(_elm),
+   $Utils = Elm.Utils.make(_elm);
+   var receivedEmotion = F2(function (cat,
+   people) {
       return function () {
-         return function () {
-            return _v0.nextDay ? _U.replace([["state"
-                                             ,$Models.Playing]],
-            _v1) : _v1;
-         }();
+         var _v0 = cat.action;
+         switch (_v0.ctor)
+         {case "Meow":
+            return $Models.Good;
+            case "Purr":
+            return $Models.Bad;}
+         return $Models.Bad;
       }();
    });
-   var physicsCat = F2(function (_v4,
+   var nearCatInAction = F2(function (cat,
+   people) {
+      return $Debug.watch("nearAction")(function () {
+         var _v1 = cat.action;
+         switch (_v1.ctor)
+         {case "Meow": return true;
+            case "Purr": return true;}
+         return false;
+      }() && A2($Utils.nearCat,
+      cat,
+      people));
+   });
+   var stepPeople = F2(function (cat,
+   people) {
+      return A2($List.map,
+      function (p) {
+         return _U.replace([["emotionBar"
+                            ,A2(nearCatInAction,
+                            cat,
+                            p) && _U.cmp($List.length(p.emotionBar),
+                            8) < 0 ? A2($List._op["::"],
+                            A2(receivedEmotion,cat,p),
+                            p.emotionBar) : A2(nearCatInAction,
+                            cat,
+                            p) ? A2($List._op["::"],
+                            A2(receivedEmotion,cat,p),
+                            $List.reverse(A2($List.drop,
+                            1,
+                            $List.reverse(p.emotionBar)))) : p.emotionBar]],
+         p);
+      },
+      people);
+   });
+   var actionCat = F2(function (_v2,
    cat) {
       return function () {
-         return _U.replace([["x"
-                            ,cat.x + _v4.delta * cat.vx]],
+         return _U.replace([["action"
+                            ,_v2.space ? $Models.Meow : _v2.ctrl ? $Models.Purr : $Models.Nope]],
          cat);
       }();
    });
-   var walkCat = F2(function (_v6,
+   var walkCat = F2(function (_v4,
    cat) {
       return function () {
          return _U.replace([["vx"
-                            ,_U.cmp(_v6.dir.x,
-                            0) < 0 ? -0.2 : _U.cmp(_v6.dir.x,
-                            0) > 0 ? 0.2 : 0.0]],
+                            ,_U.cmp(_v4.dir.x,
+                            0) < 0 ? -0.65 : _U.cmp(_v4.dir.x,
+                            0) > 0 ? 0.65 : 0.0]],
          cat);
       }();
    });
-   var stepPlaying = F2(function (_v8,
+   var stepEnd = F2(function (input,
+   game) {
+      return game;
+   });
+   var stepEndDay = F2(function (_v6,
+   game) {
+      return function () {
+         return _v6.endDay ? _U.replace([["state"
+                                         ,$Models.End]],
+         game) : game;
+      }();
+   });
+   var stepNewDay = F2(function (_v8,
    _v9) {
       return function () {
          return function () {
+            return _v8.nextDay ? _U.replace([["state"
+                                             ,$Models.Playing]],
+            _v9) : _v9;
+         }();
+      }();
+   });
+   var stepMenu = F2(function (_v12,
+   screen) {
+      return function () {
+         return _U.replace([["state"
+                            ,_v12.enter ? $Models.Play : $Models.Menu]],
+         screen);
+      }();
+   });
+   var ground = -111;
+   var physicsCat = F2(function (_v14,
+   cat) {
+      return function () {
+         return _U.replace([["x"
+                            ,cat.x + _v14.delta * cat.vx]
+                           ,["y"
+                            ,A2($Basics.max,
+                            ground,
+                            cat.y + _v14.delta * cat.vy)]],
+         cat);
+      }();
+   });
+   var jumpCat = F2(function (_v16,
+   cat) {
+      return function () {
+         return _U.cmp(_v16.dir.y,
+         0) > 0 && _U.eq(cat.y,
+         ground) ? _U.replace([["vy",2]],
+         cat) : cat;
+      }();
+   });
+   var gravityCat = F2(function (_v18,
+   cat) {
+      return function () {
+         return _U.cmp(cat.y,
+         ground) > 0 ? _U.replace([["vy"
+                                   ,cat.vy - _v18.delta / 50]],
+         cat) : cat;
+      }();
+   });
+   var stepPlaying = F2(function (_v20,
+   _v21) {
+      return function () {
+         return function () {
             return function () {
-               var cat$ = $Debug.watch("cat")(physicsCat(_v8)(walkCat(_v8)(_v9.cat)));
-               return _U.replace([["time"
-                                  ,_v9.time + $Time.inSeconds(_v8.delta)]
-                                 ,["cat",cat$]],
-               _v9);
+               var people$ = stepPeople(_v21.cat)(_v21.people);
+               var cat$ = $Debug.watch("cat")(actionCat(_v20)(physicsCat(_v20)(walkCat(_v20)(gravityCat(_v20)(jumpCat(_v20)(_v21.cat))))));
+               return _U.cmp(_v21.time,
+               100) < 0 ? _U.replace([["time"
+                                      ,_v21.time + $Time.inSeconds(_v20.delta * 4)]
+                                     ,["cat",cat$]
+                                     ,["people",people$]],
+               _v21) : _U.replace([["time",0]
+                                  ,["state",$Models.EndDay]],
+               _v21);
             }();
          }();
       }();
    });
-   var stepGame = F2(function (_v12,
-   _v13) {
+   var stepGame = F2(function (_v24,
+   _v25) {
       return function () {
          return function () {
             return function () {
                var input$ = _U.replace([["nextDay"
                                         ,false]],
-               _v12);
-               return _v12.escape ? _U.replace([["state"
+               _v24);
+               return _v24.escape ? _U.replace([["state"
                                                 ,$Models.NewDay]],
-               _v13) : function () {
-                  var _v16 = _v13.state;
-                  switch (_v16.ctor)
-                  {case "End":
-                     return A2(stepNewDay,
+               _v25) : function () {
+                  var _v28 = _v25.state;
+                  switch (_v28.ctor)
+                  {case "End": return A2(stepEnd,
                        input$,
-                       _v13);
+                       _v25);
                      case "EndDay":
-                     return A2(stepNewDay,
+                     return A2(stepEndDay,
                        input$,
-                       _v13);
+                       _v25);
                      case "NewDay":
-                     return A2(stepNewDay,_v12,_v13);
+                     return A2(stepNewDay,_v24,_v25);
                      case "Pause":
                      return A2(stepNewDay,
                        input$,
-                       _v13);
+                       _v25);
                      case "Playing":
                      return A2(stepPlaying,
                        input$,
-                       _v13);}
+                       _v25);}
                   _U.badCase($moduleName,
-                  "between lines 38 and 43");
+                  "between lines 43 and 48");
                }();
             }();
          }();
       }();
    });
-   var stepMenu = F2(function (_v17,
-   screen) {
-      return function () {
-         return _U.replace([["state"
-                            ,_v17.enter ? $Models.Play : $Models.Menu]],
-         screen);
-      }();
-   });
-   var stepScreen = F2(function (_v19,
-   _v20) {
+   var stepScreen = F2(function (_v29,
+   _v30) {
       return function () {
          return function () {
             return function () {
-               var input$ = $Debug.watch("input")(_v19);
+               var game$ = $Debug.watch("game")(_v30.game);
+               var input$ = $Debug.watch("input")(_v29);
                return function () {
-                  var _v23 = _v20.state;
-                  switch (_v23.ctor)
+                  var _v33 = _v30.state;
+                  switch (_v33.ctor)
                   {case "Menu":
-                     return A2(stepMenu,input$,_v20);
+                     return A2(stepMenu,input$,_v30);
                      case "Play":
                      return _U.replace([["game"
-                                        ,A2(stepGame,input$,_v20.game)]
+                                        ,A2(stepGame,input$,game$)]
                                        ,["state"
-                                        ,_v19.escape ? $Models.Menu : $Models.Play]],
-                       _v20);}
+                                        ,_v29.escape ? $Models.Menu : $Models.Play]],
+                       _v30);}
                   _U.badCase($moduleName,
-                  "between lines 14 and 18");
+                  "between lines 30 and 34");
                }();
             }();
          }();
       }();
    });
    _elm.Step.values = {_op: _op
+                      ,ground: ground
                       ,stepScreen: stepScreen
                       ,stepMenu: stepMenu
-                      ,walkCat: walkCat
-                      ,physicsCat: physicsCat
                       ,stepGame: stepGame
                       ,stepNewDay: stepNewDay
+                      ,stepEndDay: stepEndDay
+                      ,stepEnd: stepEnd
+                      ,walkCat: walkCat
+                      ,physicsCat: physicsCat
+                      ,jumpCat: jumpCat
+                      ,gravityCat: gravityCat
+                      ,actionCat: actionCat
+                      ,stepPeople: stepPeople
+                      ,nearCatInAction: nearCatInAction
+                      ,receivedEmotion: receivedEmotion
                       ,stepPlaying: stepPlaying};
    return _elm.Step.values;
 };Elm.Text = Elm.Text || {};
@@ -6896,6 +7032,30 @@ Elm.Transform2D.make = function (_elm) {
                              ,scaleX: scaleX
                              ,scaleY: scaleY};
    return _elm.Transform2D.values;
+};Elm.Utils = Elm.Utils || {};
+Elm.Utils.make = function (_elm) {
+   "use strict";
+   _elm.Utils = _elm.Utils || {};
+   if (_elm.Utils.values)
+   return _elm.Utils.values;
+   var _op = {},
+   _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   _P = _N.Ports.make(_elm),
+   $moduleName = "Utils",
+   $Basics = Elm.Basics.make(_elm),
+   $Models = Elm.Models.make(_elm);
+   var nearCat = F2(function (cat,
+   people) {
+      return _U.cmp($Basics.sqrt(Math.pow(people.x - cat.x,
+      2) + Math.pow(people.y - cat.y,
+      2)),
+      175) < 0;
+   });
+   _elm.Utils.values = {_op: _op
+                       ,nearCat: nearCat};
+   return _elm.Utils.values;
 };Elm.View = Elm.View || {};
 Elm.View.make = function (_elm) {
    "use strict";
@@ -6910,12 +7070,32 @@ Elm.View.make = function (_elm) {
    $moduleName = "View",
    $Basics = Elm.Basics.make(_elm),
    $Color = Elm.Color.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
    $Graphics$Collage = Elm.Graphics.Collage.make(_elm),
    $Graphics$Element = Elm.Graphics.Element.make(_elm),
    $Graphics$Input = Elm.Graphics.Input.make(_elm),
    $Input = Elm.Input.make(_elm),
+   $List = Elm.List.make(_elm),
    $Models = Elm.Models.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
+   $Signal = Elm.Signal.make(_elm),
+   $Text = Elm.Text.make(_elm),
+   $Utils = Elm.Utils.make(_elm);
+   var endDayButton = A4($Graphics$Input.customButton,
+   A2($Signal.send,
+   $Input.clickEndDayButton,
+   true),
+   A3($Graphics$Element.image,
+   225,
+   116,
+   "assets/newspaper/button.png"),
+   A3($Graphics$Element.image,
+   225,
+   116,
+   "assets/newspaper/button_hover.png"),
+   A3($Graphics$Element.image,
+   225,
+   116,
+   "assets/newspaper/button_down.png"));
    var newDayButton = A4($Graphics$Input.customButton,
    A2($Signal.send,
    $Input.clickNewDayButton,
@@ -6932,69 +7112,375 @@ Elm.View.make = function (_elm) {
    225,
    116,
    "assets/newspaper/button_down.png"));
-   var drawCat = function (cat) {
-      return $Graphics$Collage.toForm(A3($Graphics$Element.image,
-      cat.w,
-      cat.h,
-      "assets/cat/catStanding.gif"));
-   };
-   var displayPlaying = F2(function (_v0,
-   _v1) {
+   var drawEmotionBarsContent = F2(function (_v0,
+   people) {
       return function () {
-         return function () {
-            switch (_v0.ctor)
-            {case "_Tuple2":
-               return A3($Graphics$Collage.collage,
+         switch (_v0.ctor)
+         {case "_Tuple2":
+            return function () {
+                 var emotionsWithIndex = A3($List.map2,
+                 F2(function (v0,v1) {
+                    return {ctor: "_Tuple2"
+                           ,_0: v0
+                           ,_1: v1};
+                 }),
+                 people.emotionBar,
+                 _L.range(0,
+                 $List.length(people.emotionBar)));
+                 var goodEmotions = A2($List.filter,
+                 function (_v4) {
+                    return function () {
+                       switch (_v4.ctor)
+                       {case "_Tuple2":
+                          return function () {
+                               switch (_v4._0.ctor)
+                               {case "Bad": return false;
+                                  case "Good": return true;}
+                               _U.badCase($moduleName,
+                               "between lines 156 and 158");
+                            }();}
+                       _U.badCase($moduleName,
+                       "between lines 156 and 158");
+                    }();
+                 },
+                 emotionsWithIndex);
+                 var badEmotions = A2($List.filter,
+                 function (_v9) {
+                    return function () {
+                       switch (_v9.ctor)
+                       {case "_Tuple2":
+                          return function () {
+                               switch (_v9._0.ctor)
+                               {case "Bad": return true;
+                                  case "Good": return false;}
+                               _U.badCase($moduleName,
+                               "between lines 159 and 161");
+                            }();}
+                       _U.badCase($moduleName,
+                       "between lines 159 and 161");
+                    }();
+                 },
+                 emotionsWithIndex);
+                 return $Graphics$Collage.toForm(A3($Graphics$Collage.collage,
                  _v0._0,
                  _v0._1,
+                 A2($List.append,
+                 A2($List.map,
+                 function (_v14) {
+                    return function () {
+                       switch (_v14.ctor)
+                       {case "_Tuple2":
+                          return A2($Graphics$Collage.move,
+                            {ctor: "_Tuple2"
+                            ,_0: people.x + 34 - 10 * $Basics.toFloat(_v14._1)
+                            ,_1: people.y + 90},
+                            A2($Graphics$Collage.filled,
+                            $Color.blue,
+                            A2($Graphics$Collage.rect,
+                            10,
+                            18)));}
+                       _U.badCase($moduleName,
+                       "on line 164, column 22 to 103");
+                    }();
+                 },
+                 goodEmotions),
+                 A2($List.map,
+                 function (_v18) {
+                    return function () {
+                       switch (_v18.ctor)
+                       {case "_Tuple2":
+                          return A2($Graphics$Collage.move,
+                            {ctor: "_Tuple2"
+                            ,_0: people.x + 34 - 10 * $Basics.toFloat(_v18._1)
+                            ,_1: people.y + 90},
+                            A2($Graphics$Collage.filled,
+                            $Color.lightRed,
+                            A2($Graphics$Collage.rect,
+                            10,
+                            18)));}
+                       _U.badCase($moduleName,
+                       "on line 165, column 22 to 108");
+                    }();
+                 },
+                 badEmotions))));
+              }();}
+         _U.badCase($moduleName,
+         "between lines 154 and 166");
+      }();
+   });
+   var drawEmotionBarsBorder = function (people) {
+      return A2($Graphics$Collage.move,
+      {ctor: "_Tuple2"
+      ,_0: people.x
+      ,_1: people.y + 90},
+      A2($Graphics$Collage.outlined,
+      $Graphics$Collage.solid($Color.black),
+      A2($Graphics$Collage.rect,
+      80,
+      20)));
+   };
+   var drawEmotionBars = F3(function (_v22,
+   cat,
+   people) {
+      return function () {
+         switch (_v22.ctor)
+         {case "_Tuple2":
+            return function () {
+                 var nearPeople = A2($List.filter,
+                 function (x) {
+                    return A2($Utils.nearCat,
+                    cat,
+                    x);
+                 },
+                 people);
+                 return $Graphics$Collage.toForm(A3($Graphics$Collage.collage,
+                 _v22._0,
+                 _v22._1,
+                 A2($List.append,
+                 A2($List.map,
+                 function (x) {
+                    return A2(drawEmotionBarsContent,
+                    {ctor: "_Tuple2"
+                    ,_0: _v22._0
+                    ,_1: _v22._1},
+                    x);
+                 },
+                 nearPeople),
+                 A2($List.map,
+                 function (x) {
+                    return drawEmotionBarsBorder(x);
+                 },
+                 nearPeople))));
+              }();}
+         _U.badCase($moduleName,
+         "between lines 141 and 144");
+      }();
+   });
+   var drawPeople = F2(function (_v26,
+   people) {
+      return function () {
+         switch (_v26.ctor)
+         {case "_Tuple2":
+            return $Graphics$Collage.toForm(A3($Graphics$Collage.collage,
+              _v26._0,
+              _v26._1,
+              A2($List.map,
+              function (x) {
+                 return function () {
+                    var _v30 = x.kind;
+                    switch (_v30.ctor)
+                    {case "Citizen":
+                       return $Graphics$Collage.move({ctor: "_Tuple2"
+                                                     ,_0: x.x
+                                                     ,_1: x.y})($Graphics$Collage.toForm(A3($Graphics$Element.image,
+                         x.w,
+                         x.h,
+                         "assets/people/purpleMan.gif")));
+                       case "Tie":
+                       return $Graphics$Collage.move({ctor: "_Tuple2"
+                                                     ,_0: x.x
+                                                     ,_1: x.y})($Graphics$Collage.toForm(A3($Graphics$Element.image,
+                         x.w,
+                         x.h,
+                         "assets/people/tieMan.gif")));}
+                    _U.badCase($moduleName,
+                    "between lines 133 and 136");
+                 }();
+              },
+              people)));}
+         _U.badCase($moduleName,
+         "between lines 133 and 136");
+      }();
+   });
+   var drawCatAction = F2(function (_v31,
+   cat) {
+      return function () {
+         switch (_v31.ctor)
+         {case "_Tuple2":
+            return function () {
+                 var action = function () {
+                    var _v35 = cat.action;
+                    switch (_v35.ctor)
+                    {case "Meow": return "Meow";
+                       case "Nope": return "";
+                       case "Purr": return "Purr";}
+                    _U.badCase($moduleName,
+                    "between lines 119 and 123");
+                 }();
+                 return $Basics.not(_U.eq(action,
+                 "")) ? $Graphics$Collage.toForm(A3($Graphics$Collage.collage,
+                 _v31._0,
+                 _v31._1,
+                 _L.fromArray([$Graphics$Collage.toForm($Text.centered($Text.color($Color.white)($Text.height(20)($Text.bold($Text.monospace($Text.fromString(action)))))))]))) : $Graphics$Collage.toForm($Text.centered($Text.color($Color.white)($Text.bold($Text.monospace($Text.fromString(action))))));
+              }();}
+         _U.badCase($moduleName,
+         "between lines 119 and 128");
+      }();
+   });
+   var drawCat = F2(function (_v36,
+   cat) {
+      return function () {
+         switch (_v36.ctor)
+         {case "_Tuple2":
+            return $Graphics$Collage.toForm(A3($Graphics$Element.image,
+              cat.w,
+              cat.h,
+              "assets/cat/catStanding.gif"));}
+         _U.badCase($moduleName,
+         "on line 114, column 22 to 76");
+      }();
+   });
+   var nightLevel = function (time) {
+      return _U.cmp(time,
+      60) > 0 ? A2($Basics.min,
+      $Basics.toFloat(A2($Basics._op["%"],
+      $Basics.truncate(time),
+      60)) / 30,
+      0.75) : $Debug.watch("night")(0);
+   };
+   var nightColor = A3($Color.rgb,
+   56,
+   56,
+   56);
+   var displayPlaying = F2(function (_v40,
+   _v41) {
+      return function () {
+         return function () {
+            switch (_v40.ctor)
+            {case "_Tuple2":
+               return A3($Graphics$Collage.collage,
+                 _v40._0,
+                 _v40._1,
                  _L.fromArray([A2($Graphics$Collage.filled,
                               $Color.lightBlue,
                               A2($Graphics$Collage.rect,
-                              $Basics.toFloat(_v0._0),
-                              $Basics.toFloat(_v0._1)))
+                              $Basics.toFloat(_v40._0),
+                              $Basics.toFloat(_v40._1)))
+                              ,$Graphics$Collage.move({ctor: "_Tuple2"
+                                                      ,_0: -500 + _v41.time * 16
+                                                      ,_1: 330})(A2($Graphics$Collage.filled,
+                              $Color.yellow,
+                              $Graphics$Collage.circle(50)))
+                              ,$Graphics$Collage.move({ctor: "_Tuple2"
+                                                      ,_0: -1600 + _v41.time * 16
+                                                      ,_1: 330})(A2($Graphics$Collage.filled,
+                              $Color.grey,
+                              $Graphics$Collage.circle(50)))
                               ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
-                              _v0._0,
-                              _v0._1,
+                              _v40._0,
+                              _v40._1,
                               "assets/scene/background.png"))
                               ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
-                              _v0._0,
-                              _v0._1,
+                              _v40._0,
+                              _v40._1,
                               "assets/scene/mainPath.png"))
                               ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
-                              _v0._0,
-                              _v0._1,
+                              _v40._0,
+                              _v40._1,
                               "assets/scene/housesPath.png"))
                               ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
-                              _v0._0,
-                              _v0._1,
+                              _v40._0,
+                              _v40._1,
                               "assets/scene/houses.png"))
                               ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
-                              _v0._0,
-                              _v0._1,
+                              _v40._0,
+                              _v40._1,
                               "assets/scene/trees.png"))
-                              ,$Graphics$Collage.scale(0.5)($Graphics$Collage.move({ctor: "_Tuple2"
-                                                                                   ,_0: _v1.cat.x
-                                                                                   ,_1: _v1.cat.y})(drawCat(_v1.cat)))]));}
+                              ,drawPeople({ctor: "_Tuple2"
+                                          ,_0: _v40._0
+                                          ,_1: _v40._1})(_v41.people)
+                              ,A3(drawEmotionBars,
+                              {ctor: "_Tuple2"
+                              ,_0: _v40._0
+                              ,_1: _v40._1},
+                              _v41.cat,
+                              _v41.people)
+                              ,$Graphics$Collage.scale(0.75)($Graphics$Collage.move({ctor: "_Tuple2"
+                                                                                    ,_0: _v41.cat.x
+                                                                                    ,_1: _v41.cat.y})(drawCat({ctor: "_Tuple2"
+                                                                                                              ,_0: _v40._0
+                                                                                                              ,_1: _v40._1})(_v41.cat)))
+                              ,$Graphics$Collage.alpha(nightLevel(_v41.time))(A2($Graphics$Collage.filled,
+                              nightColor,
+                              A2($Graphics$Collage.rect,
+                              $Basics.toFloat(_v40._0),
+                              $Basics.toFloat(_v40._1))))
+                              ,$Graphics$Collage.move({ctor: "_Tuple2"
+                                                      ,_0: _v41.cat.x + 85
+                                                      ,_1: _v41.cat.y + 65})(drawCatAction({ctor: "_Tuple2"
+                                                                                           ,_0: _v40._0
+                                                                                           ,_1: _v40._1})(_v41.cat))
+                              ,$Graphics$Collage.moveY(-340)($Graphics$Collage.toForm($Text.centered($Text.color($Color.black)($Text.height(15)($Text.bold($Text.monospace($Text.fromString("Use ←↑→ to move "))))))))
+                              ,$Graphics$Collage.moveY(-360)($Graphics$Collage.toForm($Text.centered($Text.color($Color.black)($Text.height(15)($Text.bold($Text.monospace($Text.fromString("Space to Meow, Ctrl to Purr"))))))))
+                              ,$Graphics$Collage.moveY(-380)($Graphics$Collage.toForm($Text.centered($Text.color($Color.black)($Text.height(15)($Text.bold($Text.monospace($Text.fromString("Play with humans emotions until night (100s)"))))))))]));}
             _U.badCase($moduleName,
-            "between lines 66 and 77");
+            "between lines 75 and 102");
          }();
       }();
    });
-   var bgLight = A3($Color.rgb,
-   230,
-   230,
-   230);
+   var displayEndDay = F2(function (_v46,
+   _v47) {
+      return function () {
+         return function () {
+            switch (_v46.ctor)
+            {case "_Tuple2":
+               return A3($Graphics$Collage.collage,
+                 _v46._0,
+                 _v46._1,
+                 _L.fromArray([$Graphics$Collage.toForm(A2(displayPlaying,
+                              {ctor: "_Tuple2"
+                              ,_0: _v46._0
+                              ,_1: _v46._1},
+                              _U.replace([["time",100]],
+                              _v47)))
+                              ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
+                              _v46._0,
+                              _v46._1,
+                              "assets/endDay/skeleton.png"))
+                              ,$Graphics$Collage.scale(0.75)(A2($Graphics$Collage.move,
+                              {ctor: "_Tuple2"
+                              ,_0: 415
+                              ,_1: -345},
+                              $Graphics$Collage.toForm(endDayButton)))]));}
+            _U.badCase($moduleName,
+            "between lines 182 and 186");
+         }();
+      }();
+   });
+   var displayEnd = F2(function (_v52,
+   _v53) {
+      return function () {
+         return function () {
+            switch (_v52.ctor)
+            {case "_Tuple2":
+               return A3($Graphics$Collage.collage,
+                 _v52._0,
+                 _v52._1,
+                 _L.fromArray([A2($Graphics$Collage.filled,
+                              nightColor,
+                              A2($Graphics$Collage.rect,
+                              $Basics.toFloat(_v52._0),
+                              $Basics.toFloat(_v52._1)))
+                              ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
+                              _v52._0,
+                              _v52._1,
+                              "assets/end/skeleton.png"))]));}
+            _U.badCase($moduleName,
+            "between lines 191 and 194");
+         }();
+      }();
+   });
    var bgColor = A3($Color.rgb,
    133,
    117,
    102);
-   var displayMenu = function (_v6) {
+   var displayMenu = function (_v58) {
       return function () {
-         switch (_v6.ctor)
+         switch (_v58.ctor)
          {case "_Tuple2":
             return A3($Graphics$Collage.collage,
-              _v6._0,
-              _v6._1,
+              _v58._0,
+              _v58._1,
               _L.fromArray([A2($Graphics$Collage.filled,
                            bgColor,
                            A2($Graphics$Collage.rect,
@@ -7021,34 +7507,34 @@ Elm.View.make = function (_elm) {
                            200,
                            "assets/cat/catStanding.gif")))]));}
          _U.badCase($moduleName,
-         "between lines 39 and 44");
+         "between lines 48 and 53");
       }();
    };
-   var displayNewDay = F2(function (_v10,
-   _v11) {
+   var displayNewDay = F2(function (_v62,
+   _v63) {
       return function () {
          return function () {
-            switch (_v10.ctor)
+            switch (_v62.ctor)
             {case "_Tuple2":
                return A3($Graphics$Collage.collage,
-                 _v10._0,
-                 _v10._1,
+                 _v62._0,
+                 _v62._1,
                  _L.fromArray([A2($Graphics$Collage.filled,
                               bgColor,
                               A2($Graphics$Collage.rect,
-                              $Basics.toFloat(_v10._0),
-                              $Basics.toFloat(_v10._1)))
+                              $Basics.toFloat(_v62._0),
+                              $Basics.toFloat(_v62._1)))
                               ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
-                              _v10._0,
-                              _v10._1,
+                              _v62._0,
+                              _v62._1,
                               "assets/newspaper/skeleton.png"))
                               ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
-                              _v10._0,
-                              _v10._1,
+                              _v62._0,
+                              _v62._1,
                               "assets/newspaper/day1Label.png"))
                               ,$Graphics$Collage.toForm(A3($Graphics$Element.image,
-                              _v10._0,
-                              _v10._1,
+                              _v62._0,
+                              _v62._1,
                               "assets/newspaper/day1HeadLines.png"))
                               ,$Graphics$Collage.scale(0.75)(A2($Graphics$Collage.move,
                               {ctor: "_Tuple2"
@@ -7056,15 +7542,15 @@ Elm.View.make = function (_elm) {
                               ,_1: -345},
                               $Graphics$Collage.toForm(newDayButton)))]));}
             _U.badCase($moduleName,
-            "between lines 86 and 92");
+            "between lines 171 and 177");
          }();
       }();
    });
-   var displayGame = F2(function (_v16,
-   _v17) {
+   var displayGame = F2(function (_v68,
+   _v69) {
       return function () {
          return function () {
-            switch (_v16.ctor)
+            switch (_v68.ctor)
             {case "_Tuple2":
                return function () {
                     var $ = {ctor: "_Tuple2"
@@ -7073,78 +7559,95 @@ Elm.View.make = function (_elm) {
                     w$ = $._0,
                     h$ = $._1;
                     return A4($Graphics$Element.container,
-                    _v16._0,
-                    _v16._1,
+                    _v68._0,
+                    _v68._1,
                     $Graphics$Element.middle,
                     function () {
-                       var _v22 = _v17.state;
-                       switch (_v22.ctor)
+                       var _v74 = _v69.state;
+                       switch (_v74.ctor)
                        {case "End":
-                          return A2(displayNewDay,
+                          return A2(displayEnd,
                             {ctor: "_Tuple2",_0: w$,_1: h$},
-                            _v17);
+                            _v69);
                           case "EndDay":
-                          return A2(displayNewDay,
+                          return A2(displayEndDay,
                             {ctor: "_Tuple2",_0: w$,_1: h$},
-                            _v17);
+                            _v69);
                           case "NewDay":
                           return A2(displayNewDay,
                             {ctor: "_Tuple2",_0: w$,_1: h$},
-                            _v17);
+                            _v69);
                           case "Pause":
                           return A2(displayNewDay,
                             {ctor: "_Tuple2",_0: w$,_1: h$},
-                            _v17);
+                            _v69);
                           case "Playing":
                           return A2(displayPlaying,
                             {ctor: "_Tuple2",_0: w$,_1: h$},
-                            _v17);}
+                            _v69);}
                        _U.badCase($moduleName,
-                       "between lines 55 and 61");
+                       "between lines 64 and 70");
                     }());
                  }();}
             _U.badCase($moduleName,
-            "between lines 53 and 61");
+            "between lines 62 and 70");
          }();
       }();
    });
-   var display = F2(function (_v23,
-   _v24) {
+   var display = F2(function (_v75,
+   _v76) {
       return function () {
          return function () {
-            switch (_v23.ctor)
+            switch (_v75.ctor)
             {case "_Tuple2":
-               return function () {
-                    var _v29 = _v24.state;
-                    switch (_v29.ctor)
-                    {case "Menu":
-                       return displayMenu({ctor: "_Tuple2"
-                                          ,_0: _v23._0
-                                          ,_1: _v23._1});
-                       case "Play":
-                       return A2(displayGame,
-                         {ctor: "_Tuple2"
-                         ,_0: _v23._0
-                         ,_1: _v23._1},
-                         _v24.game);}
-                    _U.badCase($moduleName,
-                    "between lines 30 and 32");
-                 }();}
+               return A3($Graphics$Collage.collage,
+                 _v75._0,
+                 _v75._1,
+                 _L.fromArray([A2($Graphics$Collage.filled,
+                              $Color.black,
+                              A2($Graphics$Collage.rect,
+                              $Basics.toFloat(_v75._0),
+                              $Basics.toFloat(_v75._1)))
+                              ,$Graphics$Collage.toForm(function () {
+                                 var _v81 = _v76.state;
+                                 switch (_v81.ctor)
+                                 {case "Menu":
+                                    return displayMenu({ctor: "_Tuple2"
+                                                       ,_0: _v75._0
+                                                       ,_1: _v75._1});
+                                    case "Play":
+                                    return A2(displayGame,
+                                      {ctor: "_Tuple2"
+                                      ,_0: _v75._0
+                                      ,_1: _v75._1},
+                                      _v76.game);}
+                                 _U.badCase($moduleName,
+                                 "between lines 38 and 40");
+                              }())]));}
             _U.badCase($moduleName,
-            "between lines 30 and 32");
+            "between lines 36 and 41");
          }();
       }();
    });
    _elm.View.values = {_op: _op
                       ,bgColor: bgColor
-                      ,bgLight: bgLight
+                      ,nightColor: nightColor
                       ,display: display
                       ,displayMenu: displayMenu
                       ,displayGame: displayGame
                       ,displayPlaying: displayPlaying
+                      ,nightLevel: nightLevel
                       ,drawCat: drawCat
+                      ,drawCatAction: drawCatAction
+                      ,drawPeople: drawPeople
+                      ,drawEmotionBars: drawEmotionBars
+                      ,drawEmotionBarsBorder: drawEmotionBarsBorder
+                      ,drawEmotionBarsContent: drawEmotionBarsContent
                       ,displayNewDay: displayNewDay
-                      ,newDayButton: newDayButton};
+                      ,displayEndDay: displayEndDay
+                      ,displayEnd: displayEnd
+                      ,newDayButton: newDayButton
+                      ,endDayButton: endDayButton};
    return _elm.View.values;
 };Elm.Window = Elm.Window || {};
 Elm.Window.make = function (_elm) {
