@@ -40,8 +40,15 @@ type alias Game = {
   time: Float
 }
 
+type alias Button = {
+  x: Int,
+  y: Int,
+  w: Int,
+  h: Int
+}
+
 cat: Cat
-cat = { x = 0, y = 0, w = 144, h = 200, vx = 0, vy = 0 }
+cat = { x = -450, y = -111, w = 144, h = 200, vx = 0, vy = 0 }
 
 people: People
 people = { x = 0, y = 0, w = 10, h = 10, mood = Tender, emotionBar = [Good, Good, Bad] }
@@ -57,3 +64,7 @@ screen: Screen
 screen = {
   state = Menu,
   game = game }
+
+newspaperButton: Button
+newspaperButton = {
+  x = 100, y = 100, w = 75, h = 150 }
