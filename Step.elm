@@ -36,13 +36,16 @@ stepGame ({ dir, delta, escape } as input) ({ state } as game) =
   else case state of
     NewDay  -> stepNewDay  input  game
     Playing -> stepPlaying input' game
-    EndDay  -> stepNewDay  input' game
+    EndDay  -> stepEndDay  input' game
     End     -> stepNewDay  input' game
     Pause   -> stepNewDay  input' game
 
 stepNewDay: Input -> Game -> Game
 stepNewDay ({ enter, touch, nextDay } as input) ({ state } as game) =
   if nextDay then { game | state <- Playing } else game
+
+stepEndDay: Input -> Game -> Game
+stepEndDay input game = game
 
 -- Handle cat's velocity left & right (vx)
 walkCat: Input -> Cat -> Cat
@@ -70,6 +73,10 @@ stepPlaying ({ dir, delta } as input) ({ state, time, cat } as game) =
   let
     cat' = cat |> jumpCat input |> gravityCat input |> walkCat input |> physicsCat input |> Debug.watch "cat"
   in
-  { game |
+  if time < 100 then { game |
     time <- time + (inSeconds (delta * 4)),
     cat  <- cat' }
+  else { game |
+    time <- 0,
+    state <- EndDay
+  }
