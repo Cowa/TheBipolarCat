@@ -11,7 +11,10 @@ type Mood = Happy | Excited | Tender | Scared | Angry | Sad
 type Emotion = Good | Bad
 type PeopleType = Tie
 
+type CatAction = Meow | Purr | Nope
+
 type alias Cat = {
+  action: CatAction,
   x: Float,
   y: Float,
   w: Int,
@@ -50,7 +53,7 @@ type alias Button = {
 }
 
 cat: Cat
-cat = { x = -450, y = -111, w = 144, h = 200, vx = 0, vy = 0 }
+cat = { action = Nope, x = -450, y = -111, w = 144, h = 200, vx = 0, vy = 0 }
 
 people: People
 people = { x = 270, y = -20, w = 117, h = 155, mood = Tender, emotionBar = [Good, Good, Bad], kind = Tie }
@@ -59,10 +62,10 @@ game: Game
 game = {
   cat = cat,
   people = [people],
-  state = NewDay,
+  state = Playing,
   time = 0.0 }
 
 screen: Screen
 screen = {
-  state = Menu,
+  state = Play,
   game = game }

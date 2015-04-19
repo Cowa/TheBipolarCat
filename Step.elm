@@ -3,8 +3,10 @@ module Step where
 import Debug
 import Touch
 import Time(inSeconds)
+import List (map, (::))
 
 -- Game modules
+import Utils (..)
 import Input (..)
 import Models (..)
 
@@ -15,6 +17,11 @@ import Models (..)
 -- Ground level
 ground: Float
 ground = -111
+
+--
+-- All the steps!
+-- aka game logic update
+--
 
 stepScreen: Input -> Screen -> Screen
 stepScreen ({ escape } as input) ({ state, game } as screen) =
@@ -69,12 +76,40 @@ jumpCat { dir } cat = if dir.y > 0 && cat.y == ground then { cat | vy <- 2 } els
 
 -- Handle cat's gravity
 gravityCat: Input -> Cat -> Cat
-gravityCat { dir, delta } cat = if cat.y > ground then { cat | vy <- cat.vy - delta / 50 } else cat
+gravityCat { delta } cat = if cat.y > ground then { cat | vy <- cat.vy - delta / 50 } else cat
+
+-- Handle cat's actions (meooww, purrr)
+actionCat: Input -> Cat -> Cat
+actionCat { space } cat = { cat |
+  action <- if | space     -> Meow
+               | otherwise -> Nope }
+
+-- People step logic (emotion)
+stepPeople: Cat -> List People -> List People
+stepPeople cat people = map (\p -> { p |
+  emotionBar <-
+    if nearCatInAction cat p then (receivedEmotion cat p) :: p.emotionBar
+    else p.emotionBar }) people
+
+-- Check if a cat is near a people AND in action
+nearCatInAction: Cat -> People -> Bool
+nearCatInAction cat people = (case cat.action of
+  Meow -> True
+  Purr -> True
+  _    -> False) && nearCat cat people |> Debug.watch "nearAction"
+
+-- T
+receivedEmotion: Cat -> People -> Emotion
+receivedEmotion cat people = Good
 
 stepPlaying: Input -> Game -> Game
-stepPlaying ({ dir, delta } as input) ({ state, time, cat } as game) =
+stepPlaying ({ delta } as input) ({ time, cat, people } as game) =
   let
-    cat' = cat |> jumpCat input |> gravityCat input |> walkCat input |> physicsCat input |> Debug.watch "cat"
+    cat' = cat |> jumpCat input |> gravityCat input
+               |> walkCat input |> physicsCat input
+               |> actionCat input
+               |> Debug.watch "cat"
+    people' = people |> stepPeople cat
   in
   if time < 100 then { game |
     time <- time + (inSeconds (delta * 4)),

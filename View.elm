@@ -4,12 +4,16 @@ import Color (..)
 import Debug
 import Signal
 import Signal ((<~))
-import List (map)
+import List
+import List (map, filter, append, map2, length)
+import Text
+import Text (..)
 import Graphics.Input (..)
 import Graphics.Collage (..)
 import Graphics.Element (..)
 
 -- Game module
+import Utils (..)
 import Input (..)
 import Models (..)
 
@@ -73,7 +77,7 @@ displayPlaying (w, h) ({ cat, people, state, time } as game) =
     -- Sun
     filled yellow (circle 50) |> move (-500  + time * 16, 330),
     -- Moon
-    filled white (circle 50)  |> move (-1600 + time * 16, 330),
+    filled grey (circle 50)  |> move (-1600 + time * 16, 330),
     toForm (image w h "assets/scene/background.png"),
     toForm (image w h "assets/scene/mainPath.png"),
     toForm (image w h "assets/scene/housesPath.png"),
@@ -81,20 +85,41 @@ displayPlaying (w, h) ({ cat, people, state, time } as game) =
     toForm (image w h "assets/scene/trees.png"),
     people |> drawPeople (w, h),
     cat
-      |> drawCat
-      |> Debug.trace "cat"
+      |> drawCat (w, h)
       |> move (cat.x, cat.y)
       |> scale 0.75,
-    filled nightColor (rect (toFloat w) (toFloat h)) |> alpha (nightLevel time)
+    filled nightColor (rect (toFloat w) (toFloat h)) |> alpha (nightLevel time),
+    cat
+      |> drawCatAction (w, h)
+      |> move (cat.x + 85, cat.y + 65),
+      drawEmotionBars (w, h) cat people
   ]
 
 -- Give us a nice opacity level based on the time (seconds)
 nightLevel: Float -> Float
-nightLevel time = (if time > 60 then (min (toFloat ((truncate (time) % 60)) / 30) 0.75) else 0) |> Debug.watch "night"
+nightLevel time =
+  if time > 60 then
+    (min (toFloat ((truncate (time) % 60)) / 30) 0.75)
+  else 0
+  |> Debug.watch "night"
 
 -- This draw a cute cat... right?
-drawCat: Cat -> Form
-drawCat cat = toForm (image cat.w cat.h "assets/cat/catStanding.gif")
+drawCat: (Int, Int) -> Cat -> Form
+drawCat (w, h) cat = toForm (image cat.w cat.h "assets/cat/catStanding.gif")
+
+-- Draw cat's actions (Meoooow, purrrrr)
+drawCatAction: (Int, Int) -> Cat -> Form
+drawCatAction (w, h) cat =
+  let action = case cat.action of
+    Nope -> ""
+    Meow -> "Meow"
+    Purr -> "Purr"
+  in
+  if not (action == "") then
+  collage w h [
+    toForm (fromString action |> monospace |> bold |> Text.height 20 |> Text.color white |> centered)
+  ] |> toForm
+  else toForm (fromString action |> monospace |> bold |> Text.color white |> centered)
 
 -- This draw people!
 drawPeople: (Int, Int) -> List People -> Form
@@ -102,6 +127,36 @@ drawPeople (w, h) people =
   toForm (collage w h (map (\x -> case x.kind of
     Tie -> toForm (image x.w x.h "assets/people/tieMan.gif") |> move (x.x, x.y)
   ) people))
+
+-- Draw emotionsBar when the cat is near
+drawEmotionBars: (Int, Int) -> Cat -> List People -> Form
+drawEmotionBars (w, h) cat people =
+  let nearPeople = (filter (\x -> nearCat cat x) people) in
+  toForm (collage w h (List.append
+      (map (\x -> drawEmotionBarsBorder  x) nearPeople)
+      (map (\x -> drawEmotionBarsContent (w, h) x) nearPeople)))
+
+-- Draw emotion bar border
+drawEmotionBarsBorder: People -> Form
+drawEmotionBarsBorder people =
+  move (people.x, people.y + 90) (outlined (solid black) (rect 80 20))
+
+-- Draw emotion bar content
+drawEmotionBarsContent: (Int, Int) -> People -> Form
+drawEmotionBarsContent (w, h) people =
+  let
+    emotionsWithIndex = List.map2 (,) people.emotionBar [0..length people.emotionBar]
+    goodEmotions = filter (\(x, i) -> case x of
+      Good -> True
+      Bad  -> False) emotionsWithIndex
+    badEmotions  = filter (\(x, i) -> case x of
+      Bad  -> True
+      Good -> False) emotionsWithIndex
+  in
+  collage w h (List.append
+    (map (\(x, i) -> move (people.x - 10 * (toFloat i), people.y + 90) (filled blue (rect 10 18))) goodEmotions)
+    (map (\(x, i) -> move (people.x - 10 * (toFloat i), people.y + 90) (filled lightRed  (rect 10 18))) badEmotions))
+    |> toForm
 
 -- Display game in new day state (when you see the daily newspaper)
 displayNewDay: (Int, Int) -> Game -> Element
