@@ -37,7 +37,7 @@ stepGame ({ dir, delta, escape } as input) ({ state } as game) =
     NewDay  -> stepNewDay  input  game
     Playing -> stepPlaying input' game
     EndDay  -> stepEndDay  input' game
-    End     -> stepNewDay  input' game
+    End     -> stepEnd     input' game
     Pause   -> stepNewDay  input' game
 
 stepNewDay: Input -> Game -> Game
@@ -45,7 +45,10 @@ stepNewDay ({ enter, touch, nextDay } as input) ({ state } as game) =
   if nextDay then { game | state <- Playing } else game
 
 stepEndDay: Input -> Game -> Game
-stepEndDay input game = game
+stepEndDay { endDay } game = if endDay then { game | state <- End } else game
+
+stepEnd: Input -> Game -> Game
+stepEnd input game = game
 
 -- Handle cat's velocity left & right (vx)
 walkCat: Input -> Cat -> Cat

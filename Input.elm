@@ -13,6 +13,7 @@ type alias Input = {
   enter: Bool,
   escape: Bool,
   nextDay: Bool,
+  endDay: Bool,
   delta: Time }
 
 delta: Signal Time
@@ -34,8 +35,14 @@ escape = (\a -> a) <~ Keyboard.isDown 27
 nextDay: Signal Bool
 nextDay = (\a -> a) <~ subscribe clickNewDayButton
 
+endDay: Signal Bool
+endDay = (\a -> a) <~ subscribe clickEndDayButton
+
 clickNewDayButton: Signal.Channel Bool
 clickNewDayButton = Signal.channel False
 
+clickEndDayButton: Signal.Channel Bool
+clickEndDayButton = Signal.channel False
+
 input: Signal Input
-input = (Input <~ dir ~ touch ~ enter ~ escape ~ nextDay ~ delta)
+input = (Input <~ dir ~ touch ~ enter ~ escape ~ nextDay ~ endDay ~ delta)

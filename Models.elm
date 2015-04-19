@@ -57,10 +57,10 @@ game: Game
 game = {
   cat = cat,
   people = [people],
-  state = EndDay,
+  state = NewDay,
   time = 0.0 }
 
 screen: Screen
 screen = {
-  state = Play,
+  state = Menu,
   game = game }

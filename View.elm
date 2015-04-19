@@ -27,10 +27,13 @@ nightColor = rgb 56 56 56
 
 -- Display the whole screen (based on the screen state)
 display: (Int, Int) -> Screen -> Element
-display (w, h) ({ state, game } as screen) = case state of
-  Menu -> displayMenu (w, h)
-  Play -> displayGame (w, h) game
-
+display (w, h) ({ state, game } as screen) =
+  collage w h [
+    filled black (rect (toFloat w) (toFloat h)),
+    (case state of
+      Menu -> displayMenu (w, h)
+      Play -> displayGame (w, h) game) |> toForm
+  ]
 --
 -- Menu
 --
@@ -57,7 +60,7 @@ displayGame (w, h) ({ cat, people, state, time } as game) =
       NewDay  -> displayNewDay  (w', h') game
       Playing -> displayPlaying (w', h') game
       EndDay  -> displayEndDay  (w', h') game
-      End     -> displayNewDay  (w', h') game
+      End     -> displayEnd     (w', h') game
       Pause   -> displayNewDay  (w', h') game
     )
 
@@ -102,18 +105,33 @@ displayNewDay (w, h) ({ cat, people, state, time } as game) =
     move (415, -345) (toForm newDayButton) |> scale 0.75
   ]
 
--- Display game in new day state (when you see the daily newspaper)
+-- Display game in end day state
 displayEndDay: (Int, Int) -> Game -> Element
 displayEndDay (w, h) ({ cat, people, state, time } as game) =
   collage w h [
     displayPlaying (w, h) { game | time <- 100 } |> toForm,
     toForm (image w h "assets/endDay/skeleton.png"),
-    move (415, -345) (toForm newDayButton) |> scale 0.75
+    move (415, -345) (toForm endDayButton) |> scale 0.75
+  ]
+
+-- Display end game state (when party is over)
+displayEnd: (Int, Int) -> Game -> Element
+displayEnd (w, h) ({ cat, people, state, time } as game) =
+  collage w h [
+    filled nightColor (rect (toFloat w) (toFloat h)),
+    toForm (image w h "assets/end/skeleton.png")
   ]
 
 newDayButton: Element
 newDayButton =
   customButton (Signal.send clickNewDayButton True)
+    (image 225 116 "assets/newspaper/button.png")
+    (image 225 116 "assets/newspaper/button_hover.png")
+    (image 225 116 "assets/newspaper/button_down.png")
+
+endDayButton: Element
+endDayButton =
+  customButton (Signal.send clickEndDayButton True)
     (image 225 116 "assets/newspaper/button.png")
     (image 225 116 "assets/newspaper/button_hover.png")
     (image 225 116 "assets/newspaper/button_down.png")
