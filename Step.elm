@@ -3,7 +3,7 @@ module Step where
 import Debug
 import Touch
 import Time(inSeconds)
-import List (map, (::))
+import List (map, (::), length, drop, reverse)
 
 -- Game modules
 import Utils (..)
@@ -88,8 +88,12 @@ actionCat { space } cat = { cat |
 stepPeople: Cat -> List People -> List People
 stepPeople cat people = map (\p -> { p |
   emotionBar <-
-    if nearCatInAction cat p then (receivedEmotion cat p) :: p.emotionBar
-    else p.emotionBar }) people
+    if nearCatInAction cat p && length p.emotionBar < 8 then
+      (receivedEmotion cat p) :: p.emotionBar
+    else if nearCatInAction cat p then
+      (receivedEmotion cat p) :: (drop 1 (reverse p.emotionBar))
+    else
+      p.emotionBar }) people
 
 -- Check if a cat is near a people AND in action
 nearCatInAction: Cat -> People -> Bool
@@ -98,9 +102,12 @@ nearCatInAction cat people = (case cat.action of
   Purr -> True
   _    -> False) && nearCat cat people |> Debug.watch "nearAction"
 
--- T
+-- The emotion emitted by the people in response to cat's action
 receivedEmotion: Cat -> People -> Emotion
-receivedEmotion cat people = Good
+receivedEmotion cat people = case cat.action of
+  Meow -> Good
+  Purr -> Bad
+  _    -> Bad
 
 stepPlaying: Input -> Game -> Game
 stepPlaying ({ delta } as input) ({ time, cat, people } as game) =
@@ -113,7 +120,8 @@ stepPlaying ({ delta } as input) ({ time, cat, people } as game) =
   in
   if time < 100 then { game |
     time <- time + (inSeconds (delta * 4)),
-    cat  <- cat' }
+    cat  <- cat',
+    people <- people' }
   else { game |
     time <- 0,
     state <- EndDay

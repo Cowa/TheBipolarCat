@@ -133,8 +133,8 @@ drawEmotionBars: (Int, Int) -> Cat -> List People -> Form
 drawEmotionBars (w, h) cat people =
   let nearPeople = (filter (\x -> nearCat cat x) people) in
   toForm (collage w h (List.append
-      (map (\x -> drawEmotionBarsBorder  x) nearPeople)
-      (map (\x -> drawEmotionBarsContent (w, h) x) nearPeople)))
+      (map (\x -> drawEmotionBarsContent (w, h) x) nearPeople)
+      (map (\x -> drawEmotionBarsBorder  x) nearPeople)))
 
 -- Draw emotion bar border
 drawEmotionBarsBorder: People -> Form
@@ -154,8 +154,8 @@ drawEmotionBarsContent (w, h) people =
       Good -> False) emotionsWithIndex
   in
   collage w h (List.append
-    (map (\(x, i) -> move (people.x - 10 * (toFloat i), people.y + 90) (filled blue (rect 10 18))) goodEmotions)
-    (map (\(x, i) -> move (people.x - 10 * (toFloat i), people.y + 90) (filled lightRed  (rect 10 18))) badEmotions))
+    (map (\(x, i) -> move ((people.x + 34) - 10 * (toFloat i), people.y + 90) (filled blue (rect 10 18))) goodEmotions)
+    (map (\(x, i) -> move ((people.x + 34) - 10 * (toFloat i), people.y + 90) (filled lightRed  (rect 10 18))) badEmotions))
     |> toForm
 
 -- Display game in new day state (when you see the daily newspaper)

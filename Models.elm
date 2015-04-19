@@ -56,7 +56,8 @@ cat: Cat
 cat = { action = Nope, x = -450, y = -111, w = 144, h = 200, vx = 0, vy = 0 }
 
 people: People
-people = { x = 270, y = -20, w = 117, h = 155, mood = Tender, emotionBar = [Good, Good, Bad], kind = Tie }
+people = { x = 270, y = -20, w = 117, h = 155, mood = Tender,
+  emotionBar = [], kind = Tie }
 
 game: Game
 game = {
