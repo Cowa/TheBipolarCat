@@ -72,9 +72,15 @@ displayPlaying (w, h) ({ cat, people, state, time } as game) =
     toForm (image w h "assets/scene/trees.png"),
     cat
       |> drawCat
+      |> Debug.trace "cat"
       |> move (cat.x, cat.y)
-      |> scale 0.5
+      |> scale 0.75,
+    filled black (rect (toFloat w) (toFloat h)) |> alpha (nightLevel time)
   ]
+
+-- Give us a nice opacity level based on the time (seconds)
+nightLevel: Float -> Float
+nightLevel time = min (time / 90) 0.75
 
 -- This draw a cute cat... right?
 drawCat: Cat -> Form

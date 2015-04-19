@@ -16,7 +16,7 @@ type alias Input = {
   delta: Time }
 
 delta: Signal Time
-delta = fps 50
+delta = (\a -> a / 4) <~ fps 30
 
 dir: Signal { x: Int, y: Int }
 dir = (\a -> a) <~ Keyboard.arrows

@@ -8,28 +8,26 @@ import Time(inSeconds)
 import Input (..)
 import Models (..)
 
+--
+-- Some stuff
+--
+
+-- Ground level
+ground: Float
+ground = -111
+
 stepScreen: Input -> Screen -> Screen
 stepScreen ({ escape } as input) ({ state, game } as screen) =
-  let input' = input |> Debug.watch "input" in
+  let input' = input |> Debug.watch "input"
+      game'  = game  |> Debug.watch "game" in
   case state of
   Menu -> stepMenu input' screen
   Play -> { screen |
-    game  <- stepGame input' game,
+    game  <- stepGame input' game',
     state <- if escape then Menu else Play }
 
 stepMenu: Input -> Screen -> Screen
 stepMenu { enter, touch } screen = { screen | state <- if enter then Play else Menu }
-
--- Handle cat's velocity left & right (vx)
-walkCat: Input -> Cat -> Cat
-walkCat { dir } cat = { cat | vx <-
-  if | dir.x < 0 -> -0.20
-     | dir.x > 0 ->  0.20
-     | True      ->  0.00 }
-
--- Handle cat's physics (x, y)
-physicsCat: Input -> Cat -> Cat
-physicsCat { delta } cat = { cat | x <- cat.x + delta * cat.vx }
 
 stepGame: Input -> Game -> Game
 stepGame ({ dir, delta, escape } as input) ({ state } as game) =
@@ -46,11 +44,32 @@ stepNewDay: Input -> Game -> Game
 stepNewDay ({ enter, touch, nextDay } as input) ({ state } as game) =
   if nextDay then { game | state <- Playing } else game
 
+-- Handle cat's velocity left & right (vx)
+walkCat: Input -> Cat -> Cat
+walkCat { dir } cat = { cat | vx <-
+  if | dir.x < 0 -> -0.65
+     | dir.x > 0 ->  0.65
+     | otherwise ->  0.00 }
+
+-- Handle cat's physics (x, y)
+physicsCat: Input -> Cat -> Cat
+physicsCat { delta } cat = { cat |
+  x <- cat.x + delta * cat.vx,
+  y <- max ground (cat.y + delta * cat.vy) }
+
+-- Handle cat's jump
+jumpCat: Input -> Cat -> Cat
+jumpCat { dir } cat = if dir.y > 0 && cat.y == ground then { cat | vy <- 2 } else cat
+
+-- Handle cat's gravity
+gravityCat: Input -> Cat -> Cat
+gravityCat { dir, delta } cat = if cat.y > ground then { cat | vy <- cat.vy - delta / 50 } else cat
+
 stepPlaying: Input -> Game -> Game
 stepPlaying ({ dir, delta } as input) ({ state, time, cat } as game) =
   let
-    cat' = cat |> walkCat input |> physicsCat input |> Debug.watch "cat"
+    cat' = cat |> jumpCat input |> gravityCat input |> walkCat input |> physicsCat input |> Debug.watch "cat"
   in
   { game |
-    time <- time + (inSeconds delta),
+    time <- time + (inSeconds (delta * 4)),
     cat  <- cat' }
