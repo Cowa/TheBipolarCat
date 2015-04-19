@@ -9,6 +9,7 @@ type GameState = NewDay | Playing | EndDay | End | Pause
 
 type Mood = Happy | Excited | Tender | Scared | Angry | Sad
 type Emotion = Good | Bad
+type PeopleType = Tie
 
 type alias Cat = {
   x: Float,
@@ -20,11 +21,12 @@ type alias Cat = {
 }
 
 type alias People = {
-  x: Int,
-  y: Int,
+  x: Float,
+  y: Float,
   w: Int,
   h: Int,
   mood: Mood,
+  kind: PeopleType,
   emotionBar: List Emotion
 }
 
@@ -51,7 +53,7 @@ cat: Cat
 cat = { x = -450, y = -111, w = 144, h = 200, vx = 0, vy = 0 }
 
 people: People
-people = { x = 0, y = 0, w = 10, h = 10, mood = Tender, emotionBar = [Good, Good, Bad] }
+people = { x = 270, y = -20, w = 117, h = 155, mood = Tender, emotionBar = [Good, Good, Bad], kind = Tie }
 
 game: Game
 game = {

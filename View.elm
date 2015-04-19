@@ -4,6 +4,7 @@ import Color (..)
 import Debug
 import Signal
 import Signal ((<~))
+import List (map)
 import Graphics.Input (..)
 import Graphics.Collage (..)
 import Graphics.Element (..)
@@ -78,6 +79,7 @@ displayPlaying (w, h) ({ cat, people, state, time } as game) =
     toForm (image w h "assets/scene/housesPath.png"),
     toForm (image w h "assets/scene/houses.png"),
     toForm (image w h "assets/scene/trees.png"),
+    people |> drawPeople (w, h),
     cat
       |> drawCat
       |> Debug.trace "cat"
@@ -93,6 +95,13 @@ nightLevel time = (if time > 60 then (min (toFloat ((truncate (time) % 60)) / 30
 -- This draw a cute cat... right?
 drawCat: Cat -> Form
 drawCat cat = toForm (image cat.w cat.h "assets/cat/catStanding.gif")
+
+-- This draw people!
+drawPeople: (Int, Int) -> List People -> Form
+drawPeople (w, h) people =
+  toForm (collage w h (map (\x -> case x.kind of
+    Tie -> toForm (image x.w x.h "assets/people/tieMan.gif") |> move (x.x, x.y)
+  ) people))
 
 -- Display game in new day state (when you see the daily newspaper)
 displayNewDay: (Int, Int) -> Game -> Element
