@@ -13,6 +13,7 @@ type alias Input = {
   enter: Bool,
   escape: Bool,
   space: Bool,
+  ctrl: Bool,
   nextDay: Bool,
   endDay: Bool,
   delta: Time }
@@ -37,4 +38,4 @@ clickEndDayButton: Signal.Channel Bool
 clickEndDayButton = Signal.channel False
 
 input: Signal Input
-input = (Input <~ Keyboard.arrows ~ touch ~ Keyboard.enter ~ Keyboard.isDown 27 ~ Keyboard.space ~ nextDay ~ endDay ~ delta)
+input = (Input <~ Keyboard.arrows ~ touch ~ Keyboard.enter ~ Keyboard.isDown 27 ~ Keyboard.space ~ Keyboard.ctrl ~ nextDay ~ endDay ~ delta)

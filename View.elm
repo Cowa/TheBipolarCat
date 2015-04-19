@@ -84,6 +84,7 @@ displayPlaying (w, h) ({ cat, people, state, time } as game) =
     toForm (image w h "assets/scene/houses.png"),
     toForm (image w h "assets/scene/trees.png"),
     people |> drawPeople (w, h),
+    drawEmotionBars (w, h) cat people,
     cat
       |> drawCat (w, h)
       |> move (cat.x, cat.y)
@@ -92,7 +93,12 @@ displayPlaying (w, h) ({ cat, people, state, time } as game) =
     cat
       |> drawCatAction (w, h)
       |> move (cat.x + 85, cat.y + 65),
-      drawEmotionBars (w, h) cat people
+    toForm (fromString "Use ←↑→ to move "
+      |> monospace |> bold |> Text.height 15 |> Text.color black |> centered) |> moveY (-340),
+    toForm (fromString "Space to Meow, Ctrl to Purr"
+      |> monospace |> bold |> Text.height 15 |> Text.color black |> centered) |> moveY (-360),
+    toForm (fromString "Play with humans emotions until night (100s)"
+      |> monospace |> bold |> Text.height 15 |> Text.color black |> centered) |> moveY (-380)
   ]
 
 -- Give us a nice opacity level based on the time (seconds)
@@ -125,7 +131,8 @@ drawCatAction (w, h) cat =
 drawPeople: (Int, Int) -> List People -> Form
 drawPeople (w, h) people =
   toForm (collage w h (map (\x -> case x.kind of
-    Tie -> toForm (image x.w x.h "assets/people/tieMan.gif") |> move (x.x, x.y)
+    Tie     -> toForm (image x.w x.h "assets/people/tieMan.gif") |> move (x.x, x.y)
+    Citizen -> toForm (image x.w x.h "assets/people/purpleMan.gif") |> move (x.x, x.y)
   ) people))
 
 -- Draw emotionsBar when the cat is near

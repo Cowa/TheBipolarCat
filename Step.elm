@@ -80,8 +80,9 @@ gravityCat { delta } cat = if cat.y > ground then { cat | vy <- cat.vy - delta /
 
 -- Handle cat's actions (meooww, purrr)
 actionCat: Input -> Cat -> Cat
-actionCat { space } cat = { cat |
+actionCat { space, ctrl } cat = { cat |
   action <- if | space     -> Meow
+               | ctrl      -> Purr
                | otherwise -> Nope }
 
 -- People step logic (emotion)
@@ -91,7 +92,7 @@ stepPeople cat people = map (\p -> { p |
     if nearCatInAction cat p && length p.emotionBar < 8 then
       (receivedEmotion cat p) :: p.emotionBar
     else if nearCatInAction cat p then
-      (receivedEmotion cat p) :: (drop 1 (reverse p.emotionBar))
+      (receivedEmotion cat p) :: reverse (drop 1 (reverse p.emotionBar))
     else
       p.emotionBar }) people
 
