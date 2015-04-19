@@ -57,14 +57,10 @@ game: Game
 game = {
   cat = cat,
   people = [people],
-  state = NewDay,
+  state = Playing,
   time = 0.0 }
 
 screen: Screen
 screen = {
-  state = Menu,
+  state = Play,
   game = game }
-
-newspaperButton: Button
-newspaperButton = {
-  x = 100, y = 100, w = 75, h = 150 }

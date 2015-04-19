@@ -1,5 +1,7 @@
 module Step where
 
+import Debug
+import Touch
 import Time(inSeconds)
 
 -- Game modules
@@ -7,10 +9,12 @@ import Input (..)
 import Models (..)
 
 stepScreen: Input -> Screen -> Screen
-stepScreen ({ escape } as input) ({ state, game } as screen) = case state of
-  Menu -> stepMenu input screen
+stepScreen ({ escape } as input) ({ state, game } as screen) =
+  let input' = input |> Debug.watch "input" in
+  case state of
+  Menu -> stepMenu input' screen
   Play -> { screen |
-    game  <- stepGame input game,
+    game  <- stepGame input' game,
     state <- if escape then Menu else Play }
 
 stepMenu: Input -> Screen -> Screen
@@ -29,13 +33,14 @@ physicsCat { delta } cat = { cat | x <- cat.x + delta * cat.vx }
 
 stepGame: Input -> Game -> Game
 stepGame ({ dir, delta, escape } as input) ({ state } as game) =
+  let input' = { input | nextDay <- False } in
   if escape then { game | state <- NewDay }
   else case state of
-    NewDay  -> stepNewDay  input game
-    Playing -> stepPlaying input game
-    EndDay  -> stepNewDay  input game
-    End     -> stepNewDay  input game
-    Pause   -> stepNewDay  input game
+    NewDay  -> stepNewDay  input  game
+    Playing -> stepPlaying input' game
+    EndDay  -> stepNewDay  input' game
+    End     -> stepNewDay  input' game
+    Pause   -> stepNewDay  input' game
 
 stepNewDay: Input -> Game -> Game
 stepNewDay ({ enter, touch, nextDay } as input) ({ state } as game) =
@@ -44,7 +49,7 @@ stepNewDay ({ enter, touch, nextDay } as input) ({ state } as game) =
 stepPlaying: Input -> Game -> Game
 stepPlaying ({ dir, delta } as input) ({ state, time, cat } as game) =
   let
-    cat' = cat |> walkCat input |> physicsCat input
+    cat' = cat |> walkCat input |> physicsCat input |> Debug.watch "cat"
   in
   { game |
     time <- time + (inSeconds delta),

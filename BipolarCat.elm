@@ -7,7 +7,5 @@ import Models (screen)
 import Step (stepScreen)
 import View (display)
 
---
--- Boostrap!
---
-main = display <~ (Window.dimensions) ~ (foldp stepScreen screen input)
+-- Go!
+main = display <~ Window.dimensions ~ foldp stepScreen screen input

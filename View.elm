@@ -1,6 +1,7 @@
 module View where
 
 import Color (..)
+import Debug
 import Signal
 import Signal ((<~))
 import Graphics.Input (..)
@@ -26,7 +27,7 @@ bgLight = rgb 230 230 230
 
 -- Display the whole screen (based on the screen state)
 display: (Int, Int) -> Screen -> Element
-display (w, h) ({state, game} as screen) = case state of
+display (w, h) ({ state, game } as screen) = case state of
   Menu -> displayMenu (w, h)
   Play -> displayGame (w, h) game
 
@@ -48,7 +49,7 @@ displayMenu (w, h) =
 
 -- Display game by delegating the work (based on the game state)
 displayGame: (Int, Int) -> Game -> Element
-displayGame (w, h) ({cat, people, state, time} as game) =
+displayGame (w, h) ({ cat, people, state, time } as game) =
   let (w', h') = (1024, 800) in
   container w h middle
     (case state of
@@ -61,11 +62,18 @@ displayGame (w, h) ({cat, people, state, time} as game) =
 
 -- Display game in playing state (when you can move around and interact)
 displayPlaying: (Int, Int) -> Game -> Element
-displayPlaying (w, h) ({cat, people, state, time} as game) =
+displayPlaying (w, h) ({ cat, people, state, time } as game) =
   collage w h [
-    filled bgLight (rect (toFloat w) (toFloat h)),
+    filled lightBlue (rect (toFloat w) (toFloat h)),
+    toForm (image w h "assets/scene/background.png"),
     toForm (image w h "assets/scene/mainPath.png"),
-    scale 0.5 (move (cat.x, cat.y) (drawCat cat))
+    toForm (image w h "assets/scene/housesPath.png"),
+    toForm (image w h "assets/scene/houses.png"),
+    toForm (image w h "assets/scene/trees.png"),
+    cat
+      |> drawCat
+      |> move (cat.x, cat.y)
+      |> scale 0.5
   ]
 
 -- This draw a cute cat... right?
@@ -74,11 +82,13 @@ drawCat cat = toForm (image cat.w cat.h "assets/cat/catStanding.gif")
 
 -- Display game in new day state (when you see the daily newspaper)
 displayNewDay: (Int, Int) -> Game -> Element
-displayNewDay (w, h) ({cat, people, state, time} as game) =
+displayNewDay (w, h) ({ cat, people, state, time } as game) =
   collage w h [
     filled bgColor (rect (toFloat w) (toFloat h)),
     toForm (image w h "assets/newspaper/skeleton.png"),
-    move (400, -330) (toForm newDayButton)
+    toForm (image w h "assets/newspaper/day1Label.png"),
+    toForm (image w h "assets/newspaper/day1HeadLines.png"),
+    move (415, -345) (toForm newDayButton) |> scale 0.75
   ]
 
 newDayButton: Element
