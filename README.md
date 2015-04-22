@@ -13,3 +13,17 @@ Good luck.
 <p align="center">
   <img src="assets/cat/catStanding.gif" alt="bipolar cat"/>
 </p>
+
+**Note:**  
+This was my first Ludum Dare.  
+And also the first time I use Elm language.  
+I learned a lot, it was a really fun week-end.  
+But I was a little bit too ambitious on my ideas.  
+I spent most of my time learning (or trying to understand) Elm.  
+
+Functional + reactive are really nice and interesting for game dev though.  
+I'm pretty sure that my next games architecture will be affected by this experience (even if I don't use Elm!).  
+I really loved the clear seperation between : models, inputs, steps and views.  
+It makes coding game logic a lot easier without mind blowing (compare to my previous game dev experiences) :)  
+
+Next time I'll be more prepared!
