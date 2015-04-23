@@ -16,7 +16,7 @@ Good luck.
 
 **Note:**  
 This was my first Ludum Dare.  
-And also the first time I use Elm language.  
+And also the first time I used Elm language.  
 I learned a lot, it was a really fun week-end.  
 But I was a little bit too ambitious on my ideas.  
 I spent most of my time learning (or trying to understand) Elm.  
